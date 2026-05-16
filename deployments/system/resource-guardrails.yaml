@@ -1,0 +1,33 @@
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: edge-compute-quota
+  namespace: edge-apps
+spec:
+  hard:
+    pods: "4"
+    requests.cpu: "2.0"
+    requests.memory: "2Gi"
+    limits.cpu: "3.0"
+    limits.memory: "4Gi"
+---
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: edge-default-boundaries
+  namespace: edge-apps
+spec:
+  limits:
+  - default:
+      memory: "2Gi"
+      cpu: "1.5"
+    defaultRequest:
+      memory: "1Gi"
+      cpu: "1.0"
+    min:
+      memory: "256Mi"
+      cpu: "0.2"
+    max:
+      memory: "3Gi"
+      cpu: "2.0"
+    type: Container
