@@ -1,0 +1,64 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: edge-llm
+  namespace: edge-apps
+  labels:
+    app: llm
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: llm
+  template:
+    metadata:
+      labels:
+        app: llm
+    spec:
+      hostNetwork: true
+      nodeSelector:
+        node-role.kubernetes.io/edge: ""
+      containers:
+
+      # Core Inference Engine
+      - name: llm-server
+        image: docker.io/sakkshm/kubeedge-llm:v1
+        imagePullPolicy: IfNotPresent
+        resources:
+          requests:
+            memory: "1Gi"
+            cpu: "1.0"
+          limits:
+            memory: "2Gi"   
+            cpu: "1.5"
+        ports:
+        - containerPort: 8000
+          name: engine-port
+
+      # Stability Sidecar
+      - name: llm-sidecar
+        image: docker.io/sakkshm/kubeedge-llm-sidecar:v1
+        imagePullPolicy: IfNotPresent  
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "0.2"
+          limits:
+            memory: "256Mi"
+            cpu: "0.2"
+        ports:
+        - containerPort: 8001
+          name: sidecar-port
+        livenessProbe:
+          httpGet:
+            path: /health/live       
+            port: 8001
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /health/ready      
+            port: 8001
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          failureThreshold: 15
